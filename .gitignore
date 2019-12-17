@@ -1,0 +1,7 @@
+_._
+tests/
+__pycache__/
+qfigma_/
+.ipynb_checkpoints/
+qfigma/__pycache__/
+*.ipynb
