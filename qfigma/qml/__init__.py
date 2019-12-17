@@ -73,26 +73,15 @@ class FigmaQMLParser(object):
 
 
 class QmlDocument(object):
+
 	"""docstring for QmlDocument."""
-	STYLES = {
-		"DEFAULT": 0,
-		"IMAGINE": 1,
-		"FUSION": 2,
-		"MATERIAL": 3,
-		"UNIVERSAL": 4
-	}
-	QOBJECTS = {
-		"ITEM": qmlobjects.Item
-	}
+	STYLES = {"DEFAULT": 0, "IMAGINE": 1, "FUSION": 2, "MATERIAL": 3, "UNIVERSAL": 4}
+
 	def __init__(self, data, resfolder="res/"):
 		super(QmlDocument, self).__init__()
-		self.imports = {
-			"QtQuick": 2.0,
-			"QtQuick.Layouts": 1.3,
-			"QtQuick.Controls": 2.9,
-		}
+		self.imports = {"QtQuick": 2.0, "QtQuick.Layouts": 1.3, "QtQuick.Controls": 2.9}
 		self.resources = {}
-		self.root = self.extractchildren(data)
+		self.root = qmlobjects.QOBJECTS.get(data["type"], qmlobjects.Item)(data, parent=None, doc=self)
 		self.style = QmlDocument.STYLES["DEFAULT"]
 
 	def setstyle(self, style):
@@ -117,12 +106,3 @@ class QmlDocument(object):
 
 	def stringify(self):
 		pass
-
-	def extractchildren(self, node, parent=None):
-		obj = QmlDocument.QOBJECTS.get(node["type"], qmlobjects.Item)(node, parent)
-
-		for child in node["children"]:
-			childobj = QmlDocument.QOBJECTS.get(node["type"], qmlobjects.Item)(child, obj)
-			obj.add(childobj)
-
-		return obj
