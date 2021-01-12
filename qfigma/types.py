@@ -215,15 +215,25 @@ class Item:
 
 			if horizontal == "CENTER" and vertical == "CENTER":
 				self.qml_properties["anchors.centerIn"] = "parent"
+				# remove the x, y coords cus it's no longer needed
+				del self.qml_properties["x"]
+				del self.qml_properties["y"]
+
 			elif (vertical=="TOP_BOTTOM" or vertical=="SCALE") and (horizontal=="LEFT_RIGHT" or horizontal=="SCALE"):
 				self.qml_properties["anchors.fill"] = "parent"
+				# remove the x, y coords cus it's no longer needed
+				del self.qml_properties["x"]
+				del self.qml_properties["y"]
+
 			else:
 				if vertical=="TOP":
 					pass
 				elif vertical=="BOTTOM":
 					self.qml_properties["anchors.bottom"] = "parent.bottom"
+
 				elif vertical=="CENTER":
 					self.qml_properties["anchors.verticalCenter"] = "parent.verticalCenter"
+
 				elif vertical=="TOP_BOTTOM" or vertical=="SCALE":
 					self.qml_properties["anchors.top"] = "parent.top"
 					self.qml_properties["anchors.bottom"] = "parent.bottom"
@@ -232,8 +242,10 @@ class Item:
 					pass
 				elif horizontal=="RIGHT":
 					self.qml_properties["anchors.right"] = "parent.right"
+
 				elif horizontal=="CENTER":
 					self.qml_properties["anchors.horizontalCenter"] = "parent.horizontalCenter"
+
 				elif horizontal=="LEFT_RIGHT" or horizontal=="SCALE":
 					self.qml_properties["anchors.left"] = "parent.left"
 					self.qml_properties["anchors.right"] = "parent.right"
@@ -248,8 +260,8 @@ class Item:
 		parent = self.parent.qml_properties
 
 		top_offset = me.get("y", 0) - parent.get("y", 0)
-		ver_offset = (me.get("y", 0)+(me.get("height", 0)/2)) - (parent.get("y", 0)+(parent.get("height", 0)/2))
-		hor_offset = (me.get("x", 0)+(me.get("width", 0)/2)) - (parent.get("x", 0)+(parent.get("width", 0)/2))
+		ver_offset = (me.get("y", 0) + (me.get("height", 0)/2)) - (parent.get("y", 0)+(parent.get("height", 0)/2))
+		hor_offset = (me.get("x", 0) + (me.get("width", 0)/2)) - (parent.get("x", 0)+(parent.get("width", 0)/2))
 		left_offset = me.get("x", 0) - parent.get("x", 0)
 		right_offset = (parent.get("width", 0) - (me.get("x", 0) + me.get("width", 0)))
 		bottom_offset = (parent.get("height", 0) - (me.get("y", 0) + me.get("height", 0)))
@@ -308,6 +320,12 @@ class GhostItem(Item):
 		pass
 
 
+class Image(Item):
+	QML_TYPE = "Image"
+
+	def update_properties(self):
+		pass
+
 FIGMA_TYPE_MAPPING["GROUP"] = GhostItem
 
 
@@ -325,12 +343,18 @@ class Rectangle(Item):
 		if fills:
 			# this library only supports one fill per node
 			# TODO: add support for multiple fills
-			fill: dict = fills[0]
-
-			if fill["type"] == "SOLID":
-				self.qml_properties["color"] = "Qt.rgba({r}, {g}, {b}, {a})".format(
-					**fill.get("color")
-				)
+			for fill in fills:
+				if fill["type"] == "SOLID":
+					self.qml_properties["color"] = "Qt.rgba({r}, {g}, {b}, {a})".format(
+						**fill.get("color")
+					)
+				if fill["type"] == "IMAGE":
+					# create a new child... Image qml type
+					image: Image  = Image(document=self.document, figma_data=fill, parent=self)
+					image.qml_properties["anchors.fill"] = "parent"
+					image.qml_properties["source"] = ""
+					
+					self.children.append(image)
 
 	def prop_radius(self):
 		radius: float = self.figma_data.get("cornerRadius")
